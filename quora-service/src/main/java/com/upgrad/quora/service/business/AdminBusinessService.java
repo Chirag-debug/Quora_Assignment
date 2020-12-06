@@ -10,37 +10,34 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.ZonedDateTime;
-
 @Service
 public class AdminBusinessService {
     @Autowired
     private UserDao userDao;
 
+    @Autowired
+    private UserAdminBusinessService userAdminBusinessService;
+
     @Transactional(propagation = Propagation.REQUIRED)
-    public void deleteUser(final String authorization, final String uuid) throws AuthorizationFailedException, UserNotFoundException {
+    public UserEntity deleteUser(final String authorization, final String uuid) throws AuthorizationFailedException, UserNotFoundException {
 //   Add the business logic to delete the user
 
-        UserAuthTokenEntity userAuthTokenEntity = userDao.getAuthToken(authorization);
-        if(userAuthTokenEntity == null) {
-            throw new AuthorizationFailedException("ATHR-001", "User has not signed in");
+        UserAuthTokenEntity userAuthTokenEntity = userAdminBusinessService.authorize(authorization);
+        if(userAuthTokenEntity.getUser().getRole().equals("admin") || userAuthTokenEntity.getUser().getUuid().equals(uuid))
+        {
+            UserEntity userEntity = userDao.getUserByUuid(uuid);
+            if(userEntity != null)
+            {
+                return userDao.deleteUser(userEntity);
+            }
+            else
+            {
+                throw new UserNotFoundException("USR-001", "User with entered uuid to be deleted does not exist");
+            }
         }
-
-        ZonedDateTime logoutAtTime = userAuthTokenEntity.getLogoutAt();
-        if(logoutAtTime != null) {
-            throw new AuthorizationFailedException("ATHR-002", "User is signed out");
-        }
-
-        UserEntity userEntity = userDao.getUserByUuid(uuid);
-        if(userEntity == null) {
-            throw new UserNotFoundException("USR-001","User with entered uuid to be deleted does not exist");
-        }
-
-        String role = userEntity.getRole();
-        if(role.equals("nonadmin")) {
+        else
+        {
             throw new AuthorizationFailedException("ATHR-003", "Unauthorized Access, Entered user is not an admin");
         }
-        userDao.deleteAuthToken(userAuthTokenEntity);
-        userDao.deleteUser(userEntity);
     }
 }

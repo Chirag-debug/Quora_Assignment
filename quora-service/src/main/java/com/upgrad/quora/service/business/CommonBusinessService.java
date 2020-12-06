@@ -10,28 +10,19 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.ZonedDateTime;
-
 @Service
 public class CommonBusinessService {
 
     @Autowired
     private UserDao userDao;
 
+    @Autowired
+    private UserAdminBusinessService userAdminBusinessService;
+
     @Transactional(propagation = Propagation.REQUIRED)
     public UserEntity getUser(final String authorization, final String uuid) throws AuthorizationFailedException, UserNotFoundException {
 //        Write he business logic to fetch user details
-        UserAuthTokenEntity userAuthTokenEntity = userDao.getAuthToken(authorization);
-
-        if(userAuthTokenEntity == null) {
-            throw new AuthorizationFailedException("ATHR-001", "User has not signed in");
-        }
-
-        final ZonedDateTime logoutAtTime = userAuthTokenEntity.getLogoutAt();
-
-        if(logoutAtTime != null) { // check logic
-            throw new AuthorizationFailedException("ATHR-002", "User is signed out.Sign in first to get user details");
-        }
+        UserAuthTokenEntity userAuthTokenEntity = userAdminBusinessService.authorize(authorization);
 
         UserEntity userEntity = userDao.getUserByUuid(uuid);
 

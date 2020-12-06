@@ -29,28 +29,22 @@ public class AnswerBusinessService {
     @Autowired
     private AnswerDao answerDao;
 
+    @Autowired
+    private UserAdminBusinessService userAdminBusinessService;
+
 
     @Transactional(propagation = Propagation.REQUIRED)
     public AnswerEntity createAnswer(final String authorization, String  questionId, AnswerEntity answerEntity) throws AuthorizationFailedException, InvalidQuestionException {
 //      Add the business logic to create the answer
-        UserAuthTokenEntity authTokenEntity = userDao.getAuthToken(authorization);
-        if(authTokenEntity == null) {
-            throw new AuthorizationFailedException("ATHR-001", "User has not signed in");
-        }
-
-        ZonedDateTime logoutAt = authTokenEntity.getLogoutAt();
-        if(logoutAt != null) {
-            throw new AuthorizationFailedException("ATHR-002", "User is signed out.Sign in first to post an answer");
-        }
-
+        UserAuthTokenEntity userAuthTokenEntity = userAdminBusinessService.authorize(authorization);
         QuestionEntity questionEntity = questionDao.getQuestionByUuid(questionId);
         if (questionEntity == null) {
             throw new InvalidQuestionException("QUES-001", "The question entered is invalid");
         }
 
         answerEntity.setQuestion(questionEntity);
-        answerEntity.setUuid(authTokenEntity.getUuid());
-        answerEntity.setUser(authTokenEntity.getUser());
+        answerEntity.setUuid(userAuthTokenEntity.getUuid());
+        answerEntity.setUser(userAuthTokenEntity.getUser());
         answerEntity.setDate(ZonedDateTime.now());
         answerDao.createAnswer(answerEntity);
         return answerEntity;
@@ -59,12 +53,7 @@ public class AnswerBusinessService {
     @Transactional(propagation = Propagation.REQUIRED)
     public AnswerEntity editAnswer(final String authorization, final String answerid, final String editedAnswer) throws AuthorizationFailedException, AnswerNotFoundException {
         //      Add the business logic to edit the answer
-        UserAuthTokenEntity userAuthTokenEntity = userDao.getAuthToken(authorization);
-        if (userAuthTokenEntity == null) {
-            throw new AuthorizationFailedException("ATHR-001", "User has not signed in");
-        } else if (userAuthTokenEntity.getLogoutAt() != null) {
-            throw new AuthorizationFailedException("ATHR-002", "User is signed out.Sign in first to edit an answer");
-        }
+        UserAuthTokenEntity userAuthTokenEntity = userAdminBusinessService.authorize(authorization);
         AnswerEntity answerEntity = answerDao.getAnswerByUuid(answerid);
         if (answerEntity == null) {
             throw new AnswerNotFoundException("ANS-001", "Entered answer uuid does not exist");
@@ -79,14 +68,7 @@ public class AnswerBusinessService {
 
     @Transactional(propagation = Propagation.REQUIRED)
     public AnswerEntity deleteAnswer(final String authorization, final String answerid) throws AuthorizationFailedException, AnswerNotFoundException {
-        //      Add the business logic to delete the answer
-        UserAuthTokenEntity userAuthTokenEntity = userDao.getAuthToken(authorization);
-        if (userAuthTokenEntity == null) {
-            throw new AuthorizationFailedException("ATHR-001", "User has not signed in");
-        } else if (userAuthTokenEntity.getLogoutAt() != null) {
-            throw new AuthorizationFailedException(
-                    "ATHR-002", "User is signed out.Sign in first to delete an answer");
-        }
+        UserAuthTokenEntity userAuthTokenEntity = userAdminBusinessService.authorize(authorization);
 
         AnswerEntity answerEntity = answerDao.getAnswerByUuid(answerid);
         if (answerEntity == null) {
@@ -106,15 +88,7 @@ public class AnswerBusinessService {
 
     public List<AnswerEntity> getAllAswer(final String authorization, final String questionId) throws AuthorizationFailedException, InvalidQuestionException {
         //      Add the business logic to get all answer
-        UserAuthTokenEntity authTokenEntity = userDao.getAuthToken(authorization);
-        if(authTokenEntity == null) {
-            throw new AuthorizationFailedException("ATHR-001", "User has not signed in");
-        }
-
-        ZonedDateTime logoutAt = authTokenEntity.getLogoutAt();
-        if(logoutAt != null) {
-            throw new AuthorizationFailedException("ATHR-002", "User is signed out.Sign in first to get the answers");
-        }
+        UserAuthTokenEntity userAuthTokenEntity = userAdminBusinessService.authorize(authorization);
 
         QuestionEntity questionEntity = questionDao.getQuestionByUuid(questionId);
         if (questionEntity == null) {
