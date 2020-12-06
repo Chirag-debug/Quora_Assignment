@@ -22,7 +22,9 @@ public class AdminBusinessService {
 //   Add the business logic to delete the user
 
         UserAuthTokenEntity userAuthTokenEntity = userDao.getAuthToken(authorization);
-        if(userAuthTokenEntity == null) {
+
+
+        if(userAuthTokenEntity == null || userAuthTokenEntity.getUser().getUuid()!=uuid) { // added required contition
             throw new AuthorizationFailedException("ATHR-001", "User has not signed in");
         }
 
