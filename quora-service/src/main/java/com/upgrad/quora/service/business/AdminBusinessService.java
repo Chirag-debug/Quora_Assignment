@@ -24,7 +24,7 @@ public class AdminBusinessService {
         UserAuthTokenEntity userAuthTokenEntity = userDao.getAuthToken(authorization);
 
 
-        if(userAuthTokenEntity == null || userAuthTokenEntity.getUser().getUuid()!=uuid) { // added required contition
+        if(userAuthTokenEntity == null || userAuthTokenEntity.getUser().getUuid()!=uuid) { // added required condition
             throw new AuthorizationFailedException("ATHR-001", "User has not signed in");
         }
 
