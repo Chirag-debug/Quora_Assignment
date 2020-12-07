@@ -5,6 +5,7 @@ import com.upgrad.quora.service.entity.QuestionEntity;
 import org.springframework.stereotype.Repository;
 
 import javax.persistence.EntityManager;
+import javax.persistence.NoResultException;
 import javax.persistence.PersistenceContext;
 import java.util.List;
 
@@ -24,13 +25,18 @@ public class AnswerDao {
     public AnswerEntity editAnswer(final AnswerEntity answerEntity)
     {
 //         Add the logic to merge answer entity
-        return null;
+        entityManager.merge(answerEntity);
+        return answerEntity;
     }
 
-    public AnswerEntity deleteAnswer(final AnswerEntity answerEntity)
+    public AnswerEntity deleteAnswer(final String answerEntity)
     {
 //         Add the logic to remove answer entity
-        return null;
+        AnswerEntity deleteAnswer = getAnswerByUuid(answerEntity);
+        if (deleteAnswer != null) {
+            entityManager.remove(deleteAnswer);
+        }
+        return deleteAnswer;
     }
 
     public List<AnswerEntity> getAllAnswer(final QuestionEntity questionEntity)
@@ -43,9 +49,11 @@ public class AnswerDao {
 
     public AnswerEntity getAnswerByUuid(final String uuid) {
 //         Add the logic to fetch the all answer of a question
-        return null;
+        try {
+            return entityManager.createNamedQuery("getAnswerByUuid", AnswerEntity.class).setParameter("uuid", uuid).getSingleResult();
+        } catch (NoResultException nre) {
+            return null;
+        }
     }
 
 }
-
-
